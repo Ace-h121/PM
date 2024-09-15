@@ -41,7 +41,7 @@ func main(){
 		}
 		case "generate":
 			if len(os.Args) < 3{
-				fmt.Println("Do not have enough args to gen a new key")
+				fmt.Println("Error: Missing arguments. Please provide a username. Usage: generate <username>")
 				os.Exit(1)
 			}
 			username := os.Args[2]
@@ -53,27 +53,28 @@ func main(){
 	
 		case "save":
 			if len(os.Args) < 4{
-				fmt.Println("Do not have enough arguments to save a password")
+				fmt.Println("Error: Missing arguments. Please provide both a filename and a password. Usage: save <filename> <password>")
 				os.Exit(1)
 			}
 			err := os.Chdir(dir + "/PM/")
 			key, err:= os.ReadFile(dir + "/.config/PM.conf" )
 			if err != nil {
-				fmt.Println("Key not found, please run Setup")
+				fmt.Println("Error: Encryption key not found. Please run 'setup' to initialize the password manager.")
 				os.Exit(1)
 			}
 			fmt.Println(string(key))
 			encryptedPass := EncryptAES(key, os.Args[3])
 			os.WriteFile(os.Args[2], []byte(encryptedPass), 0777)
+			fmt.Println("Password saved successfully.")
 		case "show":
 			if len(os.Args) <3 {
-				fmt.Println("Do not have enough arguments to view a password")
+				fmt.Println("Error: Missing arguments. Please provide a filename. Usage: show <filename>")
 				os.Exit(1)
 			}
 
 			encrypedPass, err := os.ReadFile(dir + "/PM/" + os.Args[2])
 			if err != nil {
-				fmt.Println("Cant Find the Given File")
+				fmt.Println("Error: Unable to find the specified file. Ensure the file exists in the 'PM' directory.")
 				os.Exit(1)
 			}
 
@@ -91,8 +92,7 @@ func main(){
 
 
 		default:
-			fmt.Println(os.Args[1] + " is not a command")
-			
+			fmt.Printf("Error: '%s' is not a valid command. Use 'help' to see available commands.\n", os.Args[1])			
 
 	}
 }
