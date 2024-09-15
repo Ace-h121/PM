@@ -13,13 +13,14 @@ This is a simple yet powerful command-line password manager written in Go. It al
 ## Prerequisites
 
 - **Go**: Ensure you have [Go](https://golang.org/doc/install) installed on your machine.
+- **Git**: Ensure you have [git](https://git-scm.com/) installed to clone the repo.
 
 ## Installation
 
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/PM.git
+    git clone https://github.com/Ace-h121/PM
     cd PM
     ```
 
