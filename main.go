@@ -15,12 +15,12 @@ func main(){
 	// cipher key
 	args := os.Args
 	if(len(args) < 2){
-		fmt.Println("Do not have enough args")
+		printHelp()
 		os.Exit(1)
 	}
 	dir, err := os.UserHomeDir()
 	if err!= nil{
-		fmt.Println("Could not find homedir")
+		fmt.Println("Error: Could not find the users home directory, please ensure it exists")
 		os.Exit(1)
 	}
 
