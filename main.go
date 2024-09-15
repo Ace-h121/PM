@@ -63,7 +63,6 @@ func main() {
 			fmt.Println("Error: Encryption key not found. Please run 'setup' to initialize the password manager.")
 			os.Exit(1)
 		}
-		fmt.Println(key)
 		encryptedPass := EncryptAES(key, os.Args[3])
 		os.WriteFile(os.Args[2], []byte(encryptedPass), 0777)
 		fmt.Println("Password saved successfully.")
