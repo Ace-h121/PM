@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/aes"
-	"encoding/hex"
+	"crypto/cipher"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"os"
@@ -11,122 +12,140 @@ import (
 	"github.com/thanhpk/randstr"
 )
 
-func main(){
+func main() {
 	// cipher key
 	args := os.Args
-	if(len(args) < 2){
+	if len(args) < 2 {
 		printHelp()
 		os.Exit(1)
 	}
 	dir, err := os.UserHomeDir()
-	if err!= nil{
+	if err != nil {
 		fmt.Println("Error: Could not find the users home directory, please ensure it exists")
 		os.Exit(1)
 	}
 
-	switch(args[1]){
-		case "setup":
-			if _, err := os.Stat(dir + "/.config/PM.conf"); errors.Is(err, os.ErrNotExist){
+	switch args[1] {
+	case "setup":
+		if _, err := os.Stat(dir + "/.config/PM.conf"); errors.Is(err, os.ErrNotExist) {
+			fmt.Println(err)
+			if err := os.WriteFile(dir+"/.config/PM.conf", randstr.Bytes(32), 0666); err != nil {
 				fmt.Println(err)
-				if err := os.WriteFile(dir +".config/PM.conf", []byte(randstr.String(16)), 0666); err != nil{
-					fmt.Println(err)
-				}
-				fmt.Println("Finished Setup")
-			} else {
-				fmt.Println("Setup is already complete")
 			}
-			err :=os.Mkdir(dir + "/PM/", 0777 )
-		if err!=nil{
+			fmt.Println("Finished Setup")
+		} else {
+			fmt.Println("Setup is already complete")
+		}
+		err := os.Mkdir(dir+"/PM/", 0777)
+		if err != nil {
 			fmt.Println(err)
 		}
-		case "generate":
-			if len(os.Args) < 3{
-				fmt.Println("Error: Missing arguments. Please provide a username. Usage: generate <username>")
-				os.Exit(1)
-			}
-			username := os.Args[2]
-			fmt.Printf("Generating new password for %s \n", username)
-			password := randstr.String(32)
-			fmt.Printf("Password for %s is %s", username, password)
-		case "list": 
-			tree.Run()
-	
-		case "save":
-			if len(os.Args) < 4{
-				fmt.Println("Error: Missing arguments. Please provide both a filename and a password. Usage: save <filename> <password>")
-				os.Exit(1)
-			}
-			err := os.Chdir(dir + "/PM/")
-			key, err:= os.ReadFile(dir + "/.config/PM.conf" )
-			if err != nil {
-				fmt.Println("Error: Encryption key not found. Please run 'setup' to initialize the password manager.")
-				os.Exit(1)
-			}
-			fmt.Println(string(key))
-			encryptedPass := EncryptAES(key, os.Args[3])
-			os.WriteFile(os.Args[2], []byte(encryptedPass), 0777)
-			fmt.Println("Password saved successfully.")
-		case "show":
-			if len(os.Args) <3 {
-				fmt.Println("Error: Missing arguments. Please provide a filename. Usage: show <filename>")
-				os.Exit(1)
-			}
+	case "generate":
+		if len(os.Args) < 3 {
+			fmt.Println("Error: Missing arguments. Please provide a username. Usage: generate <username>")
+			os.Exit(1)
+		}
+		username := os.Args[2]
+		fmt.Printf("Generating new password for %s \n", username)
+		password := randstr.String(32)
+		fmt.Printf("Password for %s is %s", username, password)
+	case "list":
+		tree.Run()
 
-			encrypedPass, err := os.ReadFile(dir + "/PM/" + os.Args[2])
-			if err != nil {
-				fmt.Println("Error: Unable to find the specified file. Ensure the file exists in the 'PM' directory.")
-				os.Exit(1)
-			}
+	case "save":
+		if len(os.Args) < 4 {
+			fmt.Println("Error: Missing arguments. Please provide both a filename and a password. Usage: save <filename> <password>")
+			os.Exit(1)
+		}
+		err := os.Chdir(dir + "/PM/")
+		key, err := os.ReadFile(dir + "/.config/PM.conf")
+		if err != nil {
+			fmt.Println("Error: Encryption key not found. Please run 'setup' to initialize the password manager.")
+			os.Exit(1)
+		}
+		fmt.Println(key)
+		encryptedPass := EncryptAES(key, os.Args[3])
+		os.WriteFile(os.Args[2], []byte(encryptedPass), 0777)
+		fmt.Println("Password saved successfully.")
+	case "show":
+		if len(os.Args) < 3 {
+			fmt.Println("Error: Missing arguments. Please provide a filename. Usage: show <filename>")
+			os.Exit(1)
+		}
 
-			key, err:= os.ReadFile(dir + "/.config/PM.conf" )
-			if err != nil {
-				fmt.Println("Key not found, please run Setup")
-				os.Exit(1)
-			}
-			
-			decryptedPass := DecryptAES(key, string(encrypedPass))
-			
-			fmt.Printf("The password for %s is %s", os.Args[2], decryptedPass)
-		case "help":
-			printHelp()
+		encrypedPass, err := os.ReadFile(dir + "/PM/" + os.Args[2])
+		if err != nil {
+			fmt.Println("Error: Unable to find the specified file. Ensure the file exists in the 'PM' directory.")
+			os.Exit(1)
+		}
 
+		key, err := os.ReadFile(dir + "/.config/PM.conf")
+		if err != nil {
+			fmt.Println("Key not found, please run Setup")
+			os.Exit(1)
+		}
 
-		default:
-			fmt.Printf("Error: '%s' is not a valid command. Use 'help' to see available commands.\n", os.Args[1])			
+		decryptedPass := DecryptAES(key, string(encrypedPass))
+
+		fmt.Printf("The password for %s is %s", os.Args[2], decryptedPass)
+	case "help":
+		printHelp()
+
+	default:
+		fmt.Printf("Error: '%s' is not a valid command. Use 'help' to see available commands.\n", os.Args[1])
 
 	}
 }
-	
-
-
 
 func EncryptAES(key []byte, plaintext string) string {
- 
-    c, err := aes.NewCipher(key)
-    if (err!=nil){
+	aes, err := aes.NewCipher(key)
+	if err != nil {
 		panic(err)
 	}
- 
-    out := make([]byte, len(plaintext))
- 
-    c.Encrypt(out, []byte(plaintext))
- 
-    return hex.EncodeToString(out)
+
+	gcm, err := cipher.NewGCM(aes)
+	if err != nil {
+		panic(err)
+	}
+
+	// We need a 12-byte nonce for GCM (modifiable if you use cipher.NewGCMWithNonceSize())
+	// A nonce should always be randomly generated for every encryption.
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = rand.Read(nonce)
+	if err != nil {
+		panic(err)
+	}
+
+	// ciphertext here is actually nonce+ciphertext
+	// So that when we decrypt, just knowing the nonce size
+	// is enough to separate it from the ciphertext.
+	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+
+	return string(ciphertext)
 }
 
 func DecryptAES(key []byte, ct string) string {
-    ciphertext, _ := hex.DecodeString(ct)
- 
-    c, err := aes.NewCipher(key)
-	if (err != nil){
+	aes, err := aes.NewCipher([]byte(key))
+	if err != nil {
 		panic(err)
 	}
- 
-    pt := make([]byte, len(ciphertext))
-    c.Decrypt(pt, ciphertext)
- 
-    s := string(pt[:])
-    return s
+
+	gcm, err := cipher.NewGCM(aes)
+	if err != nil {
+		panic(err)
+	}
+
+	// Since we know the ciphertext is actually nonce+ciphertext
+	// And len(nonce) == NonceSize(). We can separate the two.
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := ct[:nonceSize], ct[nonceSize:]
+
+	plaintext, err := gcm.Open(nil, []byte(nonce), []byte(ciphertext), nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(plaintext)
 }
 
 func printHelp() {
@@ -147,3 +166,16 @@ func printHelp() {
 	fmt.Println("\nRun 'help' to display this message again.")
 }
 
+// Trimming is here for the encryption functions
+func padOrTrim(bb []byte, size int) []byte {
+	l := len(bb)
+	if l == size {
+		return bb
+	}
+	if l > size {
+		return bb[l-size:]
+	}
+	tmp := make([]byte, size)
+	copy(tmp[size-l:], bb)
+	return tmp
+}
