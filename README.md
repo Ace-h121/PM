@@ -58,6 +58,10 @@ Generate a new 32-character password for a specific user:
 ./password-manager generate <username>
 ```
 
+### Optional 3. **Add Auto Complete**
+
+Source either the `pm-autocomplete.sh` or `pm-autocomplete.zsh`, in either your .bashrc or .zshrc
+
 Example:
 
 ```bash
