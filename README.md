@@ -36,6 +36,11 @@ This is a simple yet powerful command-line password manager written in Go. It al
     ./password-manager setup
     ```
 
+
+Optional 4. Add Auto Complete
+
+>Source  the `pm-autocomplete.sh` in your .bashrc/.zshrc
+
 ## Usage
 
 Once installed, you can begin using the tool with the following commands:
@@ -58,17 +63,6 @@ Generate a new 32-character password for a specific user:
 ./password-manager generate <username>
 ```
 
-### Optional 3. **Add Auto Complete**
-
-Source either the `pm-autocomplete.sh` or `pm-autocomplete.zsh`, in either your .bashrc or .zshrc
-
-Example:
-
-```bash
-./password-manager generate alice
-```
-
-This will output the generated password for the user `alice`.
 
 ### 3. **Save Password**
 
