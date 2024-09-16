@@ -54,7 +54,7 @@ func main() {
 
 	case "save":
 		if len(os.Args) < 4 {
-			fmt.Println("Error: Missing arguments. Please provide both a filename and a password. Usage: save <filename> <password>")
+			fmt.Println("Error: Missing arguments. Please provide both a filename and a password. Usage: save <username> <password>")
 			os.Exit(1)
 		}
 		err := os.Chdir(dir + "/PM/")
@@ -68,7 +68,7 @@ func main() {
 		fmt.Println("Password saved successfully.")
 	case "show":
 		if len(os.Args) < 3 {
-			fmt.Println("Error: Missing arguments. Please provide a filename. Usage: show <filename>")
+			fmt.Println("Error: Missing arguments. Please provide a filename. Usage: show <username>")
 			os.Exit(1)
 		}
 
@@ -87,6 +87,13 @@ func main() {
 		decryptedPass := DecryptAES(key, string(encrypedPass))
 
 		fmt.Printf("The password for %s is %s", os.Args[2], decryptedPass)
+	case "remove":
+		if len(os.Args) < 3 {
+			fmt.Println("Error: Unable to find the specficed file. Ensure the file exists in the PM directory")
+			os.Exit(1)
+		}
+		os.Remove(dir + "/PM/" + os.Args[2])
+		os.Exit(0)
 	case "help":
 		printHelp()
 
@@ -152,29 +159,18 @@ func printHelp() {
 	fmt.Println("  <command> [arguments]")
 	fmt.Println("\nCommands:")
 	fmt.Println("  setup                  Initialize the password manager by generating a config file.")
-	fmt.Println("  generate <username>     Generate a new 32-character password for the specified username.")
+	fmt.Println("  generate <username>    Generate a new 32-character password for the specified username.")
 	fmt.Println("  list                   List all saved passwords.")
-	fmt.Println("  save <filename> <pass>  Save the specified password in the given file, encrypted with the setup key.")
-	fmt.Println("  show <filename>         Show the decrypted password for the specified file.")
+	fmt.Println("  save <username> <pass> Save the specified password in the given username, encrypted with the setup key.")
+	fmt.Println("  remove <username>      Remove the specficed password")
+	fmt.Println("  show <username>        Show the decrypted password for the specifed username.")
 	fmt.Println("\nExamples:")
 	fmt.Println("  setup                  Run this first to initialize the config.")
-	fmt.Println("  generate alice          Generate a new password for 'alice'.")
+	fmt.Println("  generate alice         Generate a new password for 'alice'.")
 	fmt.Println("  list                   List all stored passwords.")
-	fmt.Println("  save mypass.txt abc123  Save the password 'abc123' into 'mypass.txt'.")
-	fmt.Println("  show mypass.txt         Decrypt and show the password stored in 'mypass.txt'.")
+	fmt.Println("  save mypass abc123     Save the password 'abc123' into 'mypass' ")
+	fmt.Println("  remove mypass")
+	fmt.Println("  show mypass            Decrypt and show the password stored for mypass")
 	fmt.Println("\nRun 'help' to display this message again.")
 }
 
-// Trimming is here for the encryption functions
-func padOrTrim(bb []byte, size int) []byte {
-	l := len(bb)
-	if l == size {
-		return bb
-	}
-	if l > size {
-		return bb[l-size:]
-	}
-	tmp := make([]byte, size)
-	copy(tmp[size-l:], bb)
-	return tmp
-}
